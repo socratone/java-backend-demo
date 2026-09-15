@@ -1,32 +1,45 @@
+// Java 컴파일과 Spring Boot 실행·실행 가능한 JAR 생성을 위한 플러그인입니다.
 plugins {
     id 'java'
     id 'org.springframework.boot' version '4.1.0'
 }
 
+// 빌드 산출물의 그룹과 버전입니다.
 group = 'com.example'
 version = '0.0.1-SNAPSHOT'
 
+// 프로젝트 컴파일과 실행에 사용할 Java 도구 체인을 21로 지정합니다.
 java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(21)
     }
 }
 
+// 라이브러리를 내려받을 Maven Central 저장소입니다.
 repositories {
     mavenCentral()
 }
 
 dependencies {
+    // Boot BOM이 관련 라이브러리 버전을 관리하도록 합니다.
     implementation platform('org.springframework.boot:spring-boot-dependencies:4.1.0')
+    // REST 컨트롤러, JSON 응답, 내장 웹 서버를 제공합니다.
     implementation 'org.springframework.boot:spring-boot-starter-webmvc'
+    // JdbcTemplate과 HikariCP 연결 풀을 제공합니다.
     implementation 'org.springframework.boot:spring-boot-starter-jdbc'
+    // @Valid 및 필드 제약 조건을 검사하는 검증 구현체입니다.
     implementation 'org.springframework.boot:spring-boot-starter-validation'
+    // 컨트롤러와 요청·응답 타입으로 OpenAPI 문서와 Swagger UI를 구성합니다.
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:3.1.1'
+    // 실행 시 사용하는 H2 JDBC 드라이버이며, 소스는 표준 JDBC API에 의존합니다.
     runtimeOnly 'com.h2database:h2'
+    // Spring Boot 통합 테스트, MockMvc, JUnit 및 검증 도구를 제공합니다.
     testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
+    // Gradle이 JUnit Platform 테스트를 실행할 때 사용하는 런처입니다.
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
+// JUnit Platform을 통해 테스트를 검색하고 실행합니다.
 tasks.named('test') {
     useJUnitPlatform()
 }

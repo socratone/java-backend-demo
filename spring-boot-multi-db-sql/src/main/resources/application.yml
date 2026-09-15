@@ -1,19 +1,28 @@
+# 애플리케이션 이름, JSON 변환 규칙, SQL 자동 초기화 정책입니다.
 spring:
   application:
     name: spring-boot-multi-db-sql
   jackson:
     deserialization:
+      # 정수 필드에 1.5 같은 값을 보내면 정수로 잘라서 받지 않고 400으로 거부합니다.
       accept-float-as-int: false
   sql:
     init:
+      # DatabaseConfig가 DB별 SQL을 실행하므로 기본 단일 DB 초기화는 끕니다.
       mode: never
 
+# DatabaseConfig의 @Value가 읽는 프로젝트 전용 연결 설정입니다.
 app:
   datasource:
+    # mem: 뒤의 이름이 달라 세 DB의 테이블과 데이터가 서로 분리됩니다.
+    # DB_CLOSE_DELAY=-1: 마지막 연결이 닫혀도 메모리 DB를 유지합니다.
+    # DB_CLOSE_ON_EXIT=FALSE: H2 자체의 JVM 종료 훅을 비활성화합니다.
+    # 파일에 저장하지 않으므로 프로세스가 종료되면 데이터는 사라집니다.
     products-url: jdbc:h2:mem:products_db;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
     customers-url: jdbc:h2:mem:customers_db;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
     orders-url: jdbc:h2:mem:orders_db;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
 
+# Swagger UI 진입 경로입니다. OpenAPI JSON은 기본 경로 /v3/api-docs를 사용합니다.
 springdoc:
   swagger-ui:
     path: /swagger-ui.html

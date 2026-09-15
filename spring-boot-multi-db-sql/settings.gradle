@@ -1,1 +1,2 @@
+// 다른 예제와 별도로 빌드되는 독립 Gradle 프로젝트의 이름입니다.
 rootProject.name = 'spring-boot-multi-db-sql'

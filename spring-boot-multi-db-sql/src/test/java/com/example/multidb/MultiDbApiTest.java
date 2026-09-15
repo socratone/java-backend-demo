@@ -23,16 +23,22 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+/** 실제 Spring 빈과 H2 DB를 사용해 API 응답·검증·DB 분리·문서를 함께 확인합니다. */
 @SpringBootTest
 @AutoConfigureMockMvc
 class MultiDbApiTest {
+    // TCP 서버를 띄우지 않고 Spring MVC 요청 처리 과정을 실행합니다.
     @Autowired MockMvc mvc;
+    // 빈 이름을 키로 받아 테스트 대상 DB의 JdbcTemplate을 선택합니다.
     @Autowired Map<String, JdbcTemplate> templates;
 
+    /** API별 경로 구성 요소, 예상 컬럼, 정상 생성 요청을 묶은 테스트 데이터입니다. */
     record Resource(String name, List<String> columns, String request) {
+        // 리소스 이름으로 실제 API 경로를 만듭니다.
         String path() { return "/api/" + name; }
     }
 
+    /** 같은 검증을 상품·고객·주문 API에 각각 적용할 입력을 제공합니다. */
     static Stream<Resource> resources() {
         return Stream.of(
                 new Resource("products", List.of("id", "name", "price", "stock"),
@@ -43,16 +49,19 @@ class MultiDbApiTest {
                         "{\"itemName\":\"Mouse\",\"quantity\":3}"));
     }
 
+    // 매 테스트 전에 테이블과 자동 ID를 초기화하여 실행 순서에 영향을 받지 않게 합니다.
     @BeforeEach
     void resetDatabases() {
         resources().forEach(resource -> {
             JdbcTemplate jdbc = templates.get(resource.name() + "JdbcTemplate");
+            // 테이블명은 외부 입력이 아닌 resources()의 고정된 테스트 값입니다.
             jdbc.execute("DROP TABLE " + resource.name());
             new ResourceDatabasePopulator(new ClassPathResource("db/" + resource.name() + ".sql"))
                     .execute(jdbc.getDataSource());
         });
     }
 
+    /** 생성 결과가 목록에 포함되고 다른 두 DB의 응답은 그대로인지 확인합니다. */
     @ParameterizedTest
     @MethodSource("resources")
     void createThenListAndLeaveOtherDatabasesUnchanged(Resource resource) throws Exception {
@@ -82,6 +91,7 @@ class MultiDbApiTest {
         assertThat(getBody(others.get(1).path())).isEqualTo(secondBefore);
     }
 
+    /** 데이터를 모두 삭제해도 컬럼 목록은 유지되는지 확인합니다. */
     @ParameterizedTest
     @MethodSource("resources")
     void emptyTableKeepsColumns(Resource resource) throws Exception {
@@ -92,6 +102,7 @@ class MultiDbApiTest {
                 .andExpect(jsonPath("$.rows").isEmpty());
     }
 
+    /** 연결된 DB 이름과 실제 테이블 목록으로 물리적인 DB 분리를 확인합니다. */
     @Test
     void eachConnectionHasItsOwnDatabaseAndTable() {
         resources().forEach(resource -> {
@@ -104,6 +115,7 @@ class MultiDbApiTest {
         });
     }
 
+    /** 필수값 누락, 잘못된 JSON, 필드별 형식·범위 오류 사례를 제공합니다. */
     static Stream<Arguments> invalidRequests() {
         Stream<Arguments> common = resources().flatMap(resource -> Stream.of(
                 Arguments.of(resource.path(), "{}"),
@@ -131,6 +143,7 @@ class MultiDbApiTest {
         return Stream.concat(common, fields);
     }
 
+    /** 잘못된 요청이 400으로 거부되고 어느 DB에도 변경이 생기지 않는지 확인합니다. */
     @ParameterizedTest
     @MethodSource("invalidRequests")
     void invalidInputReturns400WithoutChangingAnyDatabase(String path, String request) throws Exception {
@@ -146,6 +159,7 @@ class MultiDbApiTest {
         assertThat(getBody(paths.get(2))).isEqualTo(orders);
     }
 
+    /** 숫자 하한값을 허용하고 SQL처럼 보이는 문자열도 데이터로 저장하는지 확인합니다. */
     @Test
     void acceptsNumericLowerBoundsAndBindsSqlAsData() throws Exception {
         mvc.perform(post("/api/products").contentType(MediaType.APPLICATION_JSON)
@@ -160,6 +174,7 @@ class MultiDbApiTest {
                 .andExpect(status().isCreated());
     }
 
+    /** Swagger 페이지·설정과 세 경로의 GET/POST 및 성공 응답 문서를 확인합니다. */
     @Test
     void swaggerUiAndAllSixOperationsAreAvailable() throws Exception {
         mvc.perform(get("/swagger-ui.html"))
@@ -184,6 +199,7 @@ class MultiDbApiTest {
         }
     }
 
+    /** GET의 성공 상태를 확인하고 후속 비교에 사용할 JSON 본문을 반환합니다. */
     private String getBody(String path) throws Exception {
         return mvc.perform(get(path)).andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
