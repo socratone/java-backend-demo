@@ -11,3 +11,4 @@ Java 백엔드의 주요 기술을 작은 프로젝트 단위로 직접 구현�
 | [pure-java-http-server](./pure-java-http-server) | 프레임워크 없이 구현한 최소 HTTP 서버 | Java 21, JDK `HttpServer` |
 | [maven-hello-world](./maven-hello-world) | Maven 표준 구조로 만든 콘솔 애플리케이션 | Java 21, Maven, JUnit 5 |
 | [maven-multi-module](./maven-multi-module) | 여러 단계로 중첩된 Maven 멀티 모듈 애플리케이션 | Java 21, Maven, Spring Boot |
+| [spring-boot-multi-db-sql](./spring-boot-multi-db-sql) | 독립된 DB 3개에 SQL로 조회·생성하는 REST API | Java 21, Gradle, Spring Boot, JDBC, H2, Swagger |
